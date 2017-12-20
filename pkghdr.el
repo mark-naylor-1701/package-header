@@ -135,3 +135,16 @@ symbol names for explicitly required packages."
 
 (defun -packages-and-versions ()
   (cons (-emacs-version) (-explicit-packages-and-versions)))
+
+(defun -format-package (pkg)
+  (symbol-name pkg))
+
+(defun -format-version (ver)
+  (-stringify ver))
+
+(defun -format-package-version (pkg-ver)
+  (-listify
+   (s-join
+    " "
+    (list (-format-package (car pkg-ver))
+          (-format-version (cdr pkg-ver))))))
