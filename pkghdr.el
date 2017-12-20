@@ -3,16 +3,11 @@
 ;; file:  pkghdr.el
 ;; date:  2017-Dec-18
 
-
-(require 'lisp-mnt)                     ; built-in
-(require 'names)                        ; 20171012.1214
-(require 's)                            ; 20171102.227
-
-     ;; Author: J. R. Hacker <jrh@example.com>
-     ;; Version: 1.3
-     ;; Package-Requires: ((flange "1.0"))
-     ;; Keywords: multimedia, frobnicate
-     ;; URL: http://example.com/jrhacker/superfrobnicate
+(require 'lisp-mnt)
+(require 'names)
+(require 's)
+(require 'package)
+(require 'dash)
 
 (defvar -items
   (list (cons "Author:" #'-author)
@@ -92,19 +87,14 @@
   (s-join ""
           (list "\"" s "\"")))
 
-
 (defun -emacs-version ()
-  (-listify
-    (s-join
-     " "
-     (list
-      "emacs"
-      (-stringify
-       (s-join
-        "."
-        (mapcar
-         #'int-to-string
-         (list emacs-major-version 0))))))))
+  (cons
+   'emacs
+   (s-join
+    "."
+    (mapcar
+     #'int-to-string
+     (list emacs-major-version 0)))))
 
 (defun -requires ()
   (-listify (-emacs-version)))
@@ -114,3 +104,34 @@
 
 (defun -url ()
   "http://example.com/jrhacker/superfrobnicate")
+
+(defun -find-package-name ()
+  (when (re-search-forward "(require[ \\t]'" nil t)
+    (symbol-at-point)))
+
+
+(defun -find-package-names ()
+  "Search forward from the point, accumulating a list of all
+symbol names for explicitly required packages."
+  (cl-labels ((inner (lst)
+                       (let ((name (-find-package-name)))
+                         (cond ((null name) lst)
+                               (t (inner (cons name lst)))))))
+    (nreverse (inner '()))))
+
+(defun -package-version (pkg)
+  (with-temp-buffer
+    (ignore-errors
+      (describe-package-1 pkg)
+      (goto-char 1)
+      (when (re-search-forward "Status.*-\\(.*\\)/" nil t)
+        (match-string-no-properties 1)))))
+
+(defun -explicit-packages-and-versions ()
+  (save-excursion
+    (goto-char 1)
+    (let ((pkgs (-find-package-names)))
+      (-filter #'cdr (-zip pkgs (mapcar #'-package-version pkgs))))))
+
+(defun -packages-and-versions ()
+  (cons (-emacs-version) (-explicit-packages-and-versions)))
