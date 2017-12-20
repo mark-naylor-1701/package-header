@@ -1,14 +1,12 @@
-;;; pkghdr.el --- DESCRIPTION
-
-;; Copyright (©) 2017 Mark W. Naylor
 
 ;; author: Mark W. Naylor
 ;; file:  pkghdr.el
 ;; date:  2017-Dec-18
 
 
-(require 'lisp-mnt)
-(require 'names)
+(require 'lisp-mnt)                     ; built-in
+(require 'names)                        ; 20171012.1214
+(require 's)                            ; 20171102.227
 
      ;; Author: J. R. Hacker <jrh@example.com>
      ;; Version: 1.3
@@ -16,9 +14,25 @@
      ;; Keywords: multimedia, frobnicate
      ;; URL: http://example.com/jrhacker/superfrobnicate
 
-(setq )
+(defvar -items
+  (list (cons "Author:" #'-author)
+        (cons "Version:" #'-version)
+        (cons "Package-Requires:" #'-requires)
+        (cons "Keywords:" #'-kewords)
+        (cons "URL:" #'-url)))
+(defvar comment-3 ";;;")
+(defvar comment-2 ";;")
 
-(defun -header ()
+(defun add ()
+  "docstring"
+  (interactive)
+  (when (not (-header-p))
+    (save-excursion
+      (-package-header)
+      (-package-headers)
+      (-package-footer))))
+
+(defun -package-header ()
   (goto-char 1)
   (insert (-title))
   (newline 2)
@@ -26,20 +40,29 @@
   (newline 2)
   )
 
-(defun -footer ()
+(defun -package-footer ()
   (goto-char (point-max))
   (newline 2)
   (insert (-ender)))
 
+(defun -package-headers ()
+  (mapc
+   #'insert
+   (mapcar #'(lambda (x) (concat x "\n"))
+           (mapcar #'-header-item -items))))
+
+(defun -header-item (item)
+  (s-join " " (list comment-2 (car item) (funcall (cdr item)))))
+
 (defun -copyright ()
-  (concat ";; Copyright (©) " (format-time-string "%Y ") (user-full-name)))
+  (s-join " "
+          (list comment-2 "Copyright (©)" (format-time-string "%Y") (user-full-name))))
 
 (defun -title ()
-  (concat ";;; " (buffer-name) " --- DESCRIPTION"))
+  (s-join " " (list comment-3 (buffer-name) "--- DESCRIPTION")))
 
 (defun -ender ()
-  (concat ";;; " (buffer-name) " ends here")
-  )
+  (s-join " " (list comment-3 (buffer-name) "ends here")))
 
 (defun -header-p ()
   (save-excursion
@@ -51,5 +74,43 @@
       (widen)
       res)))
 
+(defun -author ()
+  (s-join " " (list (user-full-name) (-angle-brack user-mail-address))))
 
-;;; pkghdr.el ends here
+(defun -angle-brack (string)
+  (s-join "" (list "<" string ">")))
+
+(defun -version ()
+  "0.9")
+
+(defun -listify (s)
+  (s-join
+   ""
+   (list "(" s ")")))
+
+(defun -stringify (s)
+  (s-join ""
+          (list "\"" s "\"")))
+
+
+(defun -emacs-version ()
+  (-listify
+    (s-join
+     " "
+     (list
+      "emacs"
+      (-stringify
+       (s-join
+        "."
+        (mapcar
+         #'int-to-string
+         (list emacs-major-version 0))))))))
+
+(defun -requires ()
+  (-listify (-emacs-version)))
+
+(defun -kewords ()
+  "foo bar baz")
+
+(defun -url ()
+  "http://example.com/jrhacker/superfrobnicate")
