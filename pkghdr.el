@@ -31,6 +31,10 @@
 ;; Keywords: tools, convenience, package
 ;; URL: https://github.com/mark-naylor-1701/package-header/
 
+(require 'lisp-mnt)
+(require 'names)
+(require 's)
+(require 'package)
 
 (define-namespace pkghdr-
 
