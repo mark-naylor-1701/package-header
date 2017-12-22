@@ -183,5 +183,7 @@ symbol names for explicitly required packages."
      " "
      (mapcar #'-format-package-version (-packages-and-versions)))))
 
- ) ; end of namspace definition
+) ; end of namspace definition
+
+(provide 'pkghdr)
 ;;; pkghdr.el ends here
